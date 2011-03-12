@@ -124,13 +124,13 @@ public class SMSReceive extends BroadcastReceiver {
 	          phoneNum.equals(_ChallengeResponseItem.get_PhoneNum()) &&
 	          messages[1].equals(_ChallengeResponseItem.getResponse())) {
    	         try {
-   	            sc = SmsCommand.valueOf(message.toLowerCase());
+   	            sc = SmsCommand.valueOf(_ChallengeResponseItem.get_SmsCommand().toLowerCase());
    	            switch (sc) {
    	               case stolen:
    	                  //create the intent for this
    	                  Toast.makeText(_Context
    	                        , _LatestSmsOriginatingAddress.toString() + " " + _LatestSmsMessageBody.toString() + " " + sc.name()
-   	                        , Toast.LENGTH_SHORT).show();
+   	                        , Toast.LENGTH_LONG).show();
                         break;
    	               case found:
    	                  
