@@ -22,7 +22,6 @@ public class SMSReceive extends BroadcastReceiver {
    private ChallengeResponseItem _ChallengeResponseItem;
    
 	public SMSReceive() {
-		// TODO Auto-generated constructor stub
 		_LatestSmsMessageBody = new StringBuffer();		
 		_LatestSmsOriginatingAddress = new StringBuffer();	
       _ChallengeResponseItems = new ArrayList<ChallengeResponseItem>();
@@ -39,7 +38,6 @@ public class SMSReceive extends BroadcastReceiver {
 	   //---get the SmsActivity message passed in---
       Bundle bundle = intent.getExtras();        
       SmsMessage[] msgs = null;
-//      String str = "";     
       _LatestSmsMessageBody.setLength(0);
       _LatestSmsOriginatingAddress.setLength(0);
       if (bundle != null)
@@ -99,19 +97,20 @@ public class SMSReceive extends BroadcastReceiver {
 	   //if only array of 1 then it is not a response to a challenge
 	   if(messages.length == 1) {
          try {
+            boolean WillChallenge = false;
             sc = SmsCommand.valueOf(message.toLowerCase());
             switch (sc) {
                case stolen:
-                  StartChallengeResponse(sc.name(), phoneNum);
-                  break;
                case found:
-   //               fileType = "text/html; charset=ISO-8859-1";
-                  break;
                case wipe:
-   //               fileType = "text/vnd.wap.wml";
+
+                  WillChallenge = true;
                   break;
                default: // unknown request, tell them it is bad
-   //               fileType = "unknown";
+                  WillChallenge = false;
+            }
+            if(WillChallenge){
+               StartChallengeResponse(sc.name(), phoneNum);
             }
          }
          catch (Exception e) {
@@ -119,8 +118,35 @@ public class SMSReceive extends BroadcastReceiver {
          }
 	   }
 	   //response to a challenge
-	   else {
-//	      _ChallengeResponseItem.get_TempIdent().
+	   else if (messages.length == 2) {      
+	      _ChallengeResponseItem = _ChallengeResponseDBAdapter.getInUseChallengeResponseItem(Integer.parseInt(messages[0]));
+	      if (_ChallengeResponseItem != null &&
+	          phoneNum.equals(_ChallengeResponseItem.get_PhoneNum()) &&
+	          messages[1].equals(_ChallengeResponseItem.getResponse())) {
+   	         try {
+   	            sc = SmsCommand.valueOf(message.toLowerCase());
+   	            switch (sc) {
+   	               case stolen:
+   	                  //create the intent for this
+   	                  Toast.makeText(_Context
+   	                        , _LatestSmsOriginatingAddress.toString() + " " + _LatestSmsMessageBody.toString() + " " + sc.name()
+   	                        , Toast.LENGTH_SHORT).show();
+                        break;
+   	               case found:
+   	                  
+                        break;
+   	               case wipe:
+   
+   	                  break;
+   	               default: // unknown request, tell them it is bad
+   	                  
+                        break;
+   	            }
+   	         }
+   	         catch (Exception e) {
+   	            e.printStackTrace();
+   	         }
+	      }
 //	      messages[0]
 	   }
    }
@@ -134,6 +160,8 @@ public class SMSReceive extends BroadcastReceiver {
 	   SmsManager smsManager = SmsManager.getDefault();
       smsManager.sendTextMessage(_ChallengeResponseItem.get_PhoneNum(), null
                                 ,Integer.toString(_ChallengeResponseItem.get_TempIdent()) + ":" + _ChallengeResponseItem.getChallenge(), null, null);
+      //enter this in the DB
+      _ChallengeResponseDBAdapter.updateChallengeInUse(_ChallengeResponseItem.getChallenge(), _ChallengeResponseItem.get_SmsCommand(), _ChallengeResponseItem.get_PhoneNum(), _ChallengeResponseItem.get_TempIdent());
 	   
 	}
 	

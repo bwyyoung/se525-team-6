@@ -21,6 +21,9 @@ public class ChallengeResponseDBAdapter {
   public static final String _CHALLENGE = "challenge";
   public static final String _RESPONSE = "response";
   public static final String _USED = "used";
+  public static final String _SC = "sc";
+  public static final String _PHONENUM = "phonenum";
+  public static final String _TEMPIDENT = "tempident";
   
   private SQLiteDatabase db;
   private final Context context;
@@ -66,9 +69,9 @@ public class ChallengeResponseDBAdapter {
   public boolean removeChallengeResponse(String challenge) {
 	  boolean removed = false;
 	  //check first if it has been used
-	  ChallengeResponseItem cri = geChallengeResponseItem(challenge);
+	  ChallengeResponseItem cri = getChallengeResponseItem(challenge);
 	  if (!cri.getUsed()) {
-		  removed = db.delete(DATABASE_TABLE, _CHALLENGE + "=" + challenge, null) > 0;		  
+		  removed = db.delete(DATABASE_TABLE, _CHALLENGE + "=\"" + challenge + "\"", null) > 0;		  
 	  }
 	  return removed;
   }
@@ -77,16 +80,47 @@ public class ChallengeResponseDBAdapter {
   public boolean updateResponse(String challenge, String response) {
 	  boolean updated = false;
 	  //check first if it has been used
-	  ChallengeResponseItem cri = geChallengeResponseItem(challenge);
+	  ChallengeResponseItem cri = getChallengeResponseItem(challenge);
 	  if (!cri.getUsed()) {
 		    ContentValues newValue = new ContentValues();
 		    String encryptedResp = CryptoTeam6.Encrypt(response);
 //		    newValue.put(_RESPONSE, response);
 		    newValue.put(_RESPONSE, encryptedResp);
-		    updated = db.update(DATABASE_TABLE, newValue, _CHALLENGE + "=" + challenge, null) > 0;
+		    updated = db.update(DATABASE_TABLE, newValue, _CHALLENGE + "=\"" + challenge + "\"", null) > 0;
 	  }
 	  return updated;
   }
+
+  // Update a task
+  public boolean updateChallengeInUse(String challenge, String sc, String phoneNum, int tempint) {
+     boolean updated = false;
+     //check first if it has been used
+     ChallengeResponseItem cri = getChallengeResponseItem(challenge);
+     if (!cri.getUsed()) {
+          ContentValues newValue = new ContentValues();
+          newValue.put(_SC, sc);
+          newValue.put(_PHONENUM, phoneNum);
+          newValue.put(_TEMPIDENT, tempint);
+          updated = db.update(DATABASE_TABLE, newValue, _CHALLENGE + "=\"" + challenge + "\"", null) > 0;
+     }
+     return updated;
+  }
+
+  // Update a task
+  public boolean updateChallengeUsed(int tempIdent, boolean isUsed) {
+     boolean updated = false;
+     //check first if it has been used
+     ChallengeResponseItem cri = getInUseChallengeResponseItem(tempIdent);
+     if (!cri.getUsed()) {
+        int used = isUsed ? 1 : 0;
+
+          ContentValues newValue = new ContentValues();
+          newValue.put(_USED, used);
+          updated = db.update(DATABASE_TABLE, newValue, _TEMPIDENT + "=" + tempIdent, null) > 0;
+     }
+     return updated;
+  }
+
   
   public Cursor getAllToDoItemsCursor() {
     return db.query(DATABASE_TABLE, 
@@ -97,7 +131,7 @@ public class ChallengeResponseDBAdapter {
   public Cursor setCursorToChallengeResponseItem(String challenge) throws SQLException {
     Cursor result = db.query(true, DATABASE_TABLE, 
 	                           new String[] { _CHALLENGE, _RESPONSE, _USED},
-	                           _CHALLENGE + "=" + challenge, null, null, null, 
+	                           _CHALLENGE + "=\"" + challenge + "\"", null, null, null, 
                              null, null);
     if ((result.getCount() == 0) || !result.moveToFirst()) {
       throw new SQLException("No to do items found for row: " + challenge);
@@ -105,10 +139,10 @@ public class ChallengeResponseDBAdapter {
     return result;
   }
 
-  public ChallengeResponseItem geChallengeResponseItem(String chall) throws SQLException {
+  public ChallengeResponseItem getChallengeResponseItem(String chall) throws SQLException {
     Cursor cursor = db.query(true, DATABASE_TABLE, 
                              new String[] {_CHALLENGE, _RESPONSE, _USED},
-                             _CHALLENGE + "=" + chall, null, null, null, 
+                             _CHALLENGE + "=\"" + chall + "\"", null, null, null, 
                              null, null);
     if ((cursor.getCount() == 0) || !cursor.moveToFirst()) {
       throw new SQLException("No challenge response found for challenge: " + chall);
@@ -123,6 +157,32 @@ public class ChallengeResponseDBAdapter {
     return result;  
   }
 
+  //get challenge response that is in use currently
+  public ChallengeResponseItem getInUseChallengeResponseItem(int tempIdent) throws SQLException {
+    Cursor cursor = db.query(true, DATABASE_TABLE, 
+                             new String[] {_CHALLENGE, _RESPONSE, _USED, _SC, _PHONENUM, _TEMPIDENT},
+                             _TEMPIDENT + "=" + tempIdent, null, null, null, 
+                             null, null);
+    if ((cursor.getCount() == 0) || !cursor.moveToFirst()) {
+      throw new SQLException("No challenge response found for challenge tempident: " + tempIdent);
+    }
+
+    String challenge = cursor.getString(cursor.getColumnIndex(_CHALLENGE));
+//    String response = cursor.getString(cursor.getColumnIndex(_RESPONSE));
+    String response = CryptoTeam6.Decrypt(cursor.getString(cursor.getColumnIndex(_RESPONSE)));
+    boolean used = cursor.getInt(cursor.getColumnIndex(_USED)) == 0 ? false : true;
+    String sc = cursor.getString(cursor.getColumnIndex(_SC));
+    String phonenum = cursor.getString(cursor.getColumnIndex(_PHONENUM));
+    int tempident = cursor.getInt(cursor.getColumnIndex(_TEMPIDENT));
+        
+    ChallengeResponseItem result = new ChallengeResponseItem(challenge, response, used);
+    result.set_SmsCommand(sc);
+    result.set_PhoneNum(phonenum);
+    result.set_TempIdent(tempident);
+    return result;  
+  }
+
+  //only get challenges that haven't been used
   public ChallengeResponseItem getRanChallengeResponseItem() throws SQLException {
      Cursor cursor = db.query(true, DATABASE_TABLE, 
                               new String[] {_CHALLENGE, _RESPONSE, _USED},
@@ -141,7 +201,7 @@ public class ChallengeResponseDBAdapter {
      return result;  
    }
 
-  
+  //create or update the DB
   private static class ChallengeResponseDBOpenHelper extends SQLiteOpenHelper {
 
 	  public ChallengeResponseDBOpenHelper(Context context, String name,
@@ -152,7 +212,8 @@ public class ChallengeResponseDBAdapter {
 	  // SQL Statement to create a new database.
 	  private static final String DATABASE_CREATE = "create table " + 
 	    DATABASE_TABLE + " (" + _CHALLENGE + " text not null primary key, " +
-	    _RESPONSE + " text not null, " + _USED + " INTEGER);";
+	    _RESPONSE + " text not null, " + _USED + " INTEGER, " +
+	    _SC + " text, " + _PHONENUM + " text, " + _TEMPIDENT + " INTEGER);";
 
 	  @Override
 	  public void onCreate(SQLiteDatabase _db) {

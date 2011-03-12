@@ -21,6 +21,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -139,9 +140,22 @@ public class SmsActivity extends Activity {
 			    _ChallengeResponseItems.add(0, challengeResponseItem);
 			  } while(_ChallengeResponseCursor.moveToNext());
 			  
-			  cria.notifyDataSetChanged();
+//			  cria.notifyDataSetChanged();//have an issue here when adding new challenge response
+	         _H.post(doUpdateGuiNotifyDataSetChanged);
 		}
 	}
+
+   private Runnable doUpdateGuiNotifyDataSetChanged = new Runnable() {
+      public void run() {
+         UpdateGuiNotifyDataSetChanged();
+      }
+   };
+
+   // code to update the gui
+   private void UpdateGuiNotifyDataSetChanged() {
+      cria.notifyDataSetChanged();
+   }
+    
     
 //      private void restoreUIState() {
 //        // Get the activity preferences object.
@@ -279,37 +293,23 @@ public class SmsActivity extends Activity {
 //        }
 //        return false;
 //      }
-//      
-//      @Override
-//      public void onDestroy() {
-//        super.onDestroy();
-//          
-//        // Close the database
-//        toDoDBAdapter.close();
-//      }
-//      
+//            
 //      private void cancelAdd() {
 //        addingNew = false;
 //        myEditText.setVisibility(View.GONE);
 //      }
 //
-//      private void addNewItem() {
+      private void addNewItem() {
 //        addingNew = true;
-//        myEditText.setVisibility(View.VISIBLE);
-//        myEditText.requestFocus(); 
-//      }
-//
-//      private void removeItem(int _index) {
-//        // Items are added to the listview in reverse order, so invert the index.
-//        toDoDBAdapter.removeTask(todoItems.size()-_index);
-//        updateArray();
-//      }
-    
-    
-    
-    
-    
-    
+        _myEditText01.setVisibility(View.VISIBLE);
+        _myEditText01.requestFocus(); 
+      }
+
+      private void removeItem(String challenge) {
+        // Items are added to the listview in reverse order, so invert the index.
+         _ChallengeResponseDBAdapter.removeChallengeResponse(challenge);
+        updateArray();
+      }
     
     @Override
     public void onDestroy() {
