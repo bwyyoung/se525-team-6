@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="hello">Hello World, DeviceAdminSample!</string>
+    <string name="app_name">DeviceAdminSample</string>
+    <string name="sample_device_admin">&quot;android.permission.BIND_DEVICE_ADMIN&quot;</string>
+    <string name="sample_device_admin_description">&quot;description&quot;</string>
+    <string name="activity_sample_device_admin">&quot;activity_sample_device_admin&quot;</string>
+</resources>
