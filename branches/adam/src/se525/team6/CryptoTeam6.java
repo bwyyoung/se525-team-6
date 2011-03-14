@@ -1,4 +1,7 @@
 package se525.team6;
+/* Class for general use of encrypting and decrypting our data
+ * a. gojdas
+*/
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;

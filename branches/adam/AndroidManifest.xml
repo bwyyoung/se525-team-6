@@ -29,11 +29,35 @@
             </intent-filter> 
         </receiver>
         
+<!--         Service to run other services -->
+    <service android:name=".MainService"></service>
+    <service android:name=".MainGeoService"></service>
+    <service android:name=".MainWipeService"></service>
+        
+<!--         Broadcast Receiver that will process AppWidget updates -->
+<!--        <receiver android:name=".BankWidget" android:label="My Bank App">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />-->
+<!--            </intent-filter>-->
+<!--            <meta-data android:name="android.appwidget.provider"-->
+<!--                android:resource="@xml/bankwidget" />-->
+<!--        </receiver>-->
+<!---->
+<!--         Service to perform web API queries -->
+<!--        <service android:name=".BankWidget$UpdateService" />-->
 
     </application>
+    <uses-permission android:name="se525.team6.MAINSERVICE"></uses-permission>
+    <uses-permission android:name="se525.team6.MAINGEOSERVICE"></uses-permission>
+    
     <uses-permission android:name="android.permission.SEND_SMS">
     </uses-permission>
     <uses-permission android:name="android.permission.RECEIVE_SMS">
     </uses-permission>
     
+<permission
+ android:label="Call for the Main Service"
+ android:protectionLevel="dangerous"
+ android:name="se525.team6.MAINSERVICE"
+ android:description="@string/mainservice_desc"></permission>    
 </manifest>

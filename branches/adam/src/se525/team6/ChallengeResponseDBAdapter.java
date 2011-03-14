@@ -1,4 +1,7 @@
 package se525.team6;
+/* Class for the DB to hold the challenge/response pairs
+ * a. gojdas
+*/
 
 //import java.util.Date;
 
