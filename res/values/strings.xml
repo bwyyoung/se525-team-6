@@ -2,4 +2,6 @@
 <resources>
     <string name="hello">Team 6 Project</string>
     <string name="app_name">SE525_Team_6</string>
+    <string name="mainservice_desc">Call to start main service</string>
+    
 </resources>

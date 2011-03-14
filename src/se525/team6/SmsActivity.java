@@ -1,5 +1,7 @@
 package se525.team6;
-
+/* Class used to add Challenge/Response pairs for the SMS remote controlling
+ * a. gojdas
+*/
 import java.util.ArrayList;
 
 //import java.util.Date;

@@ -1,4 +1,7 @@
 package se525.team6;
+/* Class to use as an adapter to work with challenge/response pairs to be presented in gui
+ * a. gojdas
+*/
 
 import android.content.Context;
 import java.util.*;

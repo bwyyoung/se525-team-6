@@ -1,4 +1,7 @@
 package se525.team6;
+/* Class to hold details o a challenge/response pair
+ * a. gojdas
+*/
 
 
 //import java.text.SimpleDateFormat;
