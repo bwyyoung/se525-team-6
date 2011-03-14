@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Binder;
@@ -46,10 +47,20 @@ public class MainGeoService extends Service {
    public void onStart(Intent intent, int startId) {
       super.onStart(intent, startId);
 
+
       //create a handler for the updating of the GUI
 //       _H = new Handler ();
+      
        //create a thread to do long running process outside of the gui thread
-      new Thread(doBackgroundThread).start();
+      //we have it in a timed loop so it just keeps doing it
+      try {
+         while (true) {
+            new Thread(doBackgroundThread).start();
+            Thread.sleep(60 * 5 * 1000); //5 minutes
+         }
+     } catch (InterruptedException e) {
+         e.printStackTrace();
+     }
    }
 
    public void onDestroy() {
