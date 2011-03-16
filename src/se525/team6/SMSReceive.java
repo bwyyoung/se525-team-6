@@ -5,12 +5,19 @@ package se525.team6;
 import java.util.ArrayList;
 import java.util.Random;
 
+import android.view.View;
+
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.IBinder;
+import android.os.RemoteException;
 import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
 import android.widget.Toast;
@@ -22,6 +29,13 @@ public class SMSReceive extends BroadcastReceiver {
    private ArrayList<ChallengeResponseItem> _ChallengeResponseItems;
    private ChallengeResponseDBAdapter _ChallengeResponseDBAdapter;
    private ChallengeResponseItem _ChallengeResponseItem;
+//   private IBinder _MainService;   
+//   private Intent _MainServiceIntent;
+   private Handler _H;
+//   private boolean _Test = false;
+
+   IMainSMSService service;
+   boolean bound = false;
    
 	public SMSReceive() {
 		_LatestSmsMessageBody = new StringBuffer();		
@@ -44,6 +58,24 @@ public class SMSReceive extends BroadcastReceiver {
       _LatestSmsOriginatingAddress.setLength(0);
       if (bundle != null)
       {
+         _H = new Handler();
+
+//         _MainService = peekService(context, MainServiceIntent);
+//         service = IMainService.Stub.asInterface (_MainService);
+
+//         boolean test = false;
+//         try {
+//            test = service.GeoLocateLooper();
+//         }
+//         catch (RemoteException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//         }
+//         Toast.makeText(context
+//               , "Call to mainservice returned " + test
+//               , Toast.LENGTH_LONG).show();
+         
+               
           //---retrieve the SmsActivity message received---
           Object[] pdus = (Object[]) bundle.get("pdus");
           msgs = new SmsMessage[pdus.length];            
@@ -58,6 +90,8 @@ public class SMSReceive extends BroadcastReceiver {
         		         , Toast.LENGTH_SHORT).show();
           CheckMessageForRemoteControl(_LatestSmsOriginatingAddress.toString(), _LatestSmsMessageBody.toString());
       }  
+
+//      new Thread(doMainService).start();
       
 //      http://stackoverflow.com/questions/990217/android-app-with-service-only
 //      if(intent.getAction() != null)
@@ -72,6 +106,72 @@ public class SMSReceive extends BroadcastReceiver {
       
 	}
 
+
+//   //appears we cannot bind to a service from a broadcas reciever
+//   //appears peekservice doesn't work here
+//   //bind to service in here *****************************************************************************
+//   private Runnable doMainService = new Runnable() {
+//      public void run() {
+//         GetPlainText();
+//      }
+//   }; 
+//   
+//   //do the http request here 
+//   private void GetPlainText() {
+//      boolean test = false;
+//      Intent mainServiceIntent = new Intent(_Context, MainService.class);
+//
+//    _MainService = peekService(_Context, mainServiceIntent);
+//    service = IMainService.Stub.asInterface (_MainService);
+//      
+//      try {
+//         if(service != null){
+//         _Test = service.GeoLocateLooper();
+//         _H.post(doUpdateGUI_Button01);
+//         }
+//         else{
+//            _H.post(doUpdateGUI_Button01);            
+//         }
+//      } catch (RemoteException e) {
+//         // TODO Auto-generated catch block
+//         e.printStackTrace();
+//      }
+//   }
+//   
+//   private Runnable doUpdateGUI_Button01 = new Runnable() {
+//      public void run() {
+//         Toast.makeText(_Context, "doUpdateGUI_Button01", Toast.LENGTH_SHORT)
+//               .show();
+//         updateGUI_Button01();
+//      }
+//   };
+//
+//   //code to update the gui
+//   private void updateGUI_Button01() {
+//        Toast.makeText (_Context, "updateGUI" + _Test, 
+//                Toast.LENGTH_SHORT).show ();
+//   }
+
+   
+//   private ServiceConnection connection = new ServiceConnection () {
+//     public void onServiceConnected (ComponentName className, IBinder iservice) {
+//       service = IMainService.Stub.asInterface (iservice);
+//       Toast.makeText (Viewer.this, "Connected to Service", 
+//                       Toast.LENGTH_SHORT).show ();
+//       bound = true;
+//       //enable button now that we have bound
+////       _myButton01.setEnabled(true);
+//     }
+//
+//     public void onServiceDisconnected (ComponentName className) {
+//       service = null;
+//       Toast.makeText (Viewer.this, "Disconnected from Service", 
+//                       Toast.LENGTH_SHORT).show ();
+//       bound = false;
+//     }
+//   };
+
+	
 	//good enum example --http://stackoverflow.com/questions/469287/c-vs-java-enum-for-those-new-to-c
 //	private enum CommandMode {
 //	   STOLEN ("stolen"),
@@ -94,8 +194,25 @@ public class SMSReceive extends BroadcastReceiver {
 
 	
 	private void CheckMessageForRemoteControl(String phoneNum, String message){
+	   //using for testing to avoid challenge response overhead
+      Intent intentWipe1 = new Intent(_Context, MainSmsService.class);
+      intentWipe1.putExtra("ActionToTake", "Wipe");
+      _Context.startService(intentWipe1);   
+
+////testing to see that a service can do this, it can't from here because of restrictions
+//      try {
+//         Intent intentWipe1 = new Intent(_Context, MainSmsService.class);
+//         _Context.bindService(intentWipe1, connection, Context.BIND_AUTO_CREATE);
+//         service.WipeIt();
+//      }
+//      catch (RemoteException e1) {
+//         // TODO Auto-generated catch block
+//         e1.printStackTrace();
+//      }
+      
 	   SmsCommand sc;
-	   String messages[] = message.split(":");
+//	   String messages[] = message.split(":");
+	   String messages[] = {""};//ADG !!!!!!!!!!!!!!!!in for testing put back the split
 	   //if only array of 1 then it is not a response to a challenge
 	   if(messages.length == 1) {
          try {
@@ -129,16 +246,25 @@ public class SMSReceive extends BroadcastReceiver {
    	            sc = SmsCommand.valueOf(_ChallengeResponseItem.get_SmsCommand().toLowerCase());
    	            switch (sc) {
    	               case stolen:
-   	                  //create the intent for this
-   	                  Toast.makeText(_Context
-   	                        , _LatestSmsOriginatingAddress.toString() + " " + _LatestSmsMessageBody.toString() + " " + sc.name()
-   	                        , Toast.LENGTH_LONG).show();
+   	                  //cannot bind from a broadcastreceiver so only starting
+   	                  Intent intentGeo = new Intent(_Context, MainSmsService.class);
+   	                  intentGeo.addCategory("GeoLocate");
+   	                  _Context.startService(intentGeo);
+ 
+//
+//   	                  //create the intent for this
+//   	                  Toast.makeText(_Context
+//   	                        , _LatestSmsOriginatingAddress.toString() + " " + _LatestSmsMessageBody.toString() + " " + sc.name()
+//   	                        , Toast.LENGTH_LONG).show();
                         break;
    	               case found:
    	                  
                         break;
    	               case wipe:
-   
+                        //cannot bind from a broadcastreceiver so only starting
+                        Intent intentWipe = new Intent(_Context, MainSmsService.class);
+                        intentWipe.putExtra("ActionToTake", "Wipe");
+                        _Context.startService(intentWipe);   
    	                  break;
    	               default: // unknown request, tell them it is bad
    	                  
@@ -183,4 +309,19 @@ public class SMSReceive extends BroadcastReceiver {
 		return _LatestSmsMessageBody.toString();
 	}
 
+   private ServiceConnection connection = new ServiceConnection () {
+      public void onServiceConnected (ComponentName className, IBinder iservice) {
+        service = IMainSMSService.Stub.asInterface (iservice);
+//        Toast.makeText (SMSRecieve.this, "Connected to Service", 
+//                        Toast.LENGTH_SHORT).show ();
+        bound = true;
+      }
+
+      public void onServiceDisconnected (ComponentName className) {
+        service = null;
+//        Toast.makeText (Viewer.this, "Disconnected from Service", 
+//                        Toast.LENGTH_SHORT).show ();
+        bound = false;
+      }
+    };
 }

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="hello">Hello World, Primary!</string>
+    <string name="hello">Team 6 Project</string>
     <string name="app_name">SE525_Team_6</string>
+    <string name="mainservice_desc">Call to start main service</string>   
 </resources>
