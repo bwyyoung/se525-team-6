@@ -29,8 +29,12 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.BasicHttpContext;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
@@ -113,9 +117,44 @@ public class MainSmsService extends Service {
    private Runnable doBackgroundThreadGeo = new Runnable() {
       public void run() {
          MakeRequest("Starting GeoLocate");
+         //create a thread to do long running process outside of the gui thread
+         //we have it in a timed loop so it just keeps doing it
+         try {
+            while (true) {
+               GeoLocate();
+//               new Thread(doBackgroundThread).start();
+               Thread.sleep(60 * 10 * 1000); //10 minutes
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
       }
    };
 
+   public void GeoLocate() {
+      LocationManager locationManager;
+      String context = Context.LOCATION_SERVICE;
+      locationManager = (LocationManager)getSystemService(context);
+      Criteria criteria = new Criteria();
+      criteria.setAccuracy(Criteria.ACCURACY_FINE);
+      criteria.setAltitudeRequired(false);
+      criteria.setBearingRequired(false);
+      criteria.setCostAllowed(true);
+      criteria.setPowerRequirement(Criteria.POWER_LOW);
+      String provider = locationManager.getBestProvider(criteria, true);
+      Location location = locationManager.getLastKnownLocation(provider);
+//      Double geoLat = location.getLatitude()*1E6;
+//      Double geoLng = location.getLongitude()*1E6;
+      double lat = location.getLatitude();
+      double lng = location.getLongitude();
+      String latLongString;
+      latLongString = "Lat:" + lat + "\nLong:" + lng;
+
+      MakeRequest(latLongString);
+   }
+
+   
 	//do the http request here	
 	private void MakeRequest(String commandProcessing) {
       String user = "Atester";
