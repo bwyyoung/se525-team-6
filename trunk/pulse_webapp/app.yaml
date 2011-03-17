@@ -1,0 +1,23 @@
+application: getpulse
+version: 2
+runtime: python
+api_version: 1
+
+handlers:
+-   url: /receiver
+    script: receiver.py
+-   url: /login
+    script: login.py
+-   url: /loadDefData
+    script: loaddata.py
+-   url: /pulse
+    script: pulse.py
+-   url: /stylesheets
+    static_dir: stylesheets
+-   url: /images
+    static_dir: images 
+-   url: /js
+    static_dir: js     
+
+builtins:
+- datastore_admin: on
