@@ -18,6 +18,9 @@ handlers:
     static_dir: images 
 -   url: /js
     static_dir: js     
-
+-   url: /scheduleActions
+    script: cron.py
+    login:admin
+    
 builtins:
 - datastore_admin: on
